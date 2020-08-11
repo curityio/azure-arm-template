@@ -1,0 +1,97 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dns-label": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "The DNS name label for the public IP address assigned to this container. This will be part of a FQDN that you can use to access the container."
+      }
+    },
+    "password": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 24,
+      "defaultValue": "P@ssW0rd",
+      "metadata": {
+        "description": "Password for the administrator"
+      }
+    },
+    "name": {
+      "defaultValue": "curity",
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Azure Container Instance"
+      }
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2018-10-01",
+      "name": "[parameters('name')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "containers": [
+          {
+            "name": "idsvr",
+            "properties": {
+              "image": "curity/idsvr",
+              "ports": [
+                {
+                  "protocol": "TCP",
+                  "port": 8443
+                },
+                {
+                  "protocol": "TCP",
+                  "port": 6749
+                }
+              ],
+              "environmentVariables": [
+                {
+                  "name": "PASSWORD",
+                  "value": "[parameters('password')]"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "memoryInGB": 1.5,
+                  "cpu": 1
+                }
+              }
+            }
+          }
+        ],
+        "restartPolicy": "OnFailure",
+        "ipAddress": {
+          "ports": [
+            {
+              "protocol": "TCP",
+              "port": 8443
+            },
+            {
+              "protocol": "TCP",
+              "port": 6749
+            }
+          ],
+          "type": "Public",
+          "dnsNameLabel": "[parameters('dns-label')]"
+        },
+        "osType": "Linux"
+      }
+    }
+  ],
+  "outputs": {
+    "admin": {
+      "type": "string",
+      "value": "[concat('https://', reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('name'))).ipAddress.fqdn, ':6749/admin')]"
+    },
+    "runtime": {
+      "type": "string",
+      "value": "[concat('https://', reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('name'))).ipAddress.fqdn, ':8443')]"
+    }
+  }
+}
