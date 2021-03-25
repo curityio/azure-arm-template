@@ -39,7 +39,7 @@
           {
             "name": "idsvr",
             "properties": {
-              "image": "curity/idsvr",
+              "image": "curity.azurecr.io/curity/idsvr",
               "ports": [
                 {
                   "protocol": "TCP",
